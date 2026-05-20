@@ -2,9 +2,8 @@
 title: "Mon Projet Data Science"
 subtitle: "Projet Fil Rouge Data Science - Sujet Libre"
 author:
-  - "Étudiant(e) 1 : [Insérer Prénom Nom]"
-  - "Étudiant(e) 2 : [Insérer Prénom Nom]"
-  - "Étudiant(e) 3 : [Insérer Prénom Nom]"
+  - "Étudiant 1 : [Hamza MAEROF]"
+  - "Étudiant 2 : [David CIRAKAZA]"
 date: today
 format:
   html:
@@ -32,25 +31,22 @@ link-citations: true
 
 # Introduction et Contexte Métier {#sec-intro}
 
-*À rédiger par les étudiants : Présentez ici le contexte global de votre projet, la problématique métier que vous cherchez à résoudre, les questions scientifiques soulevées et les opportunités d'aide à la décision sur la base de vos données.*
+**Problématique** : Comment prédire la valeur marchande future d'un joueur et automatiser la détection de son profil de jeu sur le terrain ?
+**Le Contexte Métier** : Les clubs cherchent à anticiper la plus-value financière d'un joueur avant qu'il n'explose sur la scène internationale (achat à bas coût, revente élevée).
 
 ## Contexte du Projet
-*À rédiger par les étudiants — Pistes de réflexion :*
 
-- *Quels sont les objectifs globaux et le domaine d'étude de votre projet ?*
-- *En quoi ce sujet de recherche est-il pertinent et stratégique ?*
-- *Pourquoi l'analyse quantitative de ce jeu de données est-elle indispensable pour répondre à votre problématique ?*
-
-[Rédiger votre paragraphe de contexte ici]
+ Le football professionnel est devenu une industrie standardisée où les données guident les investissements financiers. L'identification de talents (Scouting) et l'estimation de la valeur marchande des joueurs représentent des enjeux de plusieurs dizaines de millions d'euros pour les clubs, à l'image des stratégies menées par des structures modernes comme le LOSC au sein de la métropole lilloise. Ce projet propose une approche quantitative et multi-source pour optimiser le processus de recrutement. En combinant l'historique des performances sportives issues de la plateforme Transfermarkt et l'analyse automatisée des flux vidéo d'action par vision par ordinateur, nous cherchons à transformer des signaux faibles athlétiques et techniques en indicateurs financiers fiables pour les décideurs sportifs.
 
 ## Objectif Analytique
-*À rédiger par les étudiants — Pistes de réflexion :*
 
-- *Quelles sont les variables cibles principales et la tâche globale de modélisation (classification, régression, clustering, etc.) ?*
-- *Comment le couplage de données multi-sources et l'intégration de différents types de données (tabulaires, images, signaux, etc.) enrichissent-ils l'analyse ?*
-- *Quels sont les livrables analytiques attendus pour répondre à votre problématique et guider les prises de décisions ?*
+ L'objectif principal de ce projet est de concevoir un pipeline de données hybride répondant à deux tâches distinctes et complémentaires :
 
-[Rédiger votre paragraphe d'objectifs ici]
+ Modélisation Tabulaire (Machine Learning) : Développer un modèle de régression (ex: XGBoost, Random Forest) visant à prédire la valeur marchande (market_value_in_eur) d'un joueur en fonction de ses caractéristiques intrinsèques, de ses statistiques de performance cumulées et du contexte compétitif de son club.
+
+ Modélisation Vision (Deep Learning CNN) : Concevoir un réseau de neurones convolutif (CNN) sous TensorFlow/Keras capable de classifier le type d'action technique (Tackle, Shoot, Pass) effectué par un joueur à partir de captures d'écran de matchs.
+
+ Le couplage de ces deux approches permet d'enrichir les profils des joueurs par des métriques comportementales extraites directement de la vidéo, offrant ainsi un livrable analytique complet sous forme de tableau de bord d'aide à la décision pour le recrutement prédictif.
 
 ---
 
@@ -64,6 +60,11 @@ Le succès de tout projet de Data Science repose sur la qualité de la préparat
 ## Chapitre 2 : Nettoyage et Préparation (Wrangling)
 {{< include ../build/notebooks/02_wrangling.qmd >}}
 
+L'audit de qualité des fichiers bruts de la base relationnelle Transfermarkt a révélé plusieurs anomalies physiques et typologiques nécessitant une intervention algorithmique :
+- Hétérogénéité des types : Les variables temporelles (date_of_birth) étaient initialement interprétées comme des chaînes de caractères (object), bloquant tout calcul d'âge ou de maturité sportive.
+-Valeurs manquantes critiques : Près de $15\%$ des joueurs ne disposaient pas d'une évaluation financière (market_value_in_eur). Supprimer ces lignes aurait introduit un biais de sélection (exclusion des jeunes talents ou des championnats mineurs). Une stratégie d'imputation par la médiane conditionnelle au poste occupé a été privilégiée pour préserver la distribution économique du marché.
+-Granularité inadéquate : La table appearances.csv recense les performances à l'échelle du match. Pour correspondre à la granularité de notre table cible (players.csv), un pipeline d'agrégation et de calcul de ratios normalisés (ex: buts pour 90 minutes) a été implémenté avant la fusion finale des sources.
+
 ---
 
 # Visualisation Multidimensionnelle (Insights) {#sec-viz}
@@ -73,6 +74,22 @@ Nous présentons ici les résultats visuels clés permettant de dégager des ins
 ## Chapitre 3 : Travaux Pratiques d'Exploration Visuelle
 {{< include ../build/notebooks/03_visualisation.qmd >}}
 
+### Profils et Distributions Caractéristiques (fig-distribution-density)
+
+L'analyse de la distribution brute de la valeur marchande (market_value_in_eur) met en évidence une asymétrie positive extrême (skewness élevée). La très grande majorité des joueurs professionnels possède une valeur marchande "modeste" (inférieure à $5$ millions d'euros), tandis qu'une infime minorité d'athlètes d'élite (les "outliers" du marché comme Mbappé ou Haaland) concentre des valeurs record dépassant les $100$ millions d'euros.
+
+Pour stabiliser la variance et rendre cette variable exploitable par nos futurs algorithmes de Machine Learning (notamment pour éviter que les modèles ne soient biaisés par les super-stars), une transformation logarithmique $\log(1 + x)$ a été testée (Figure de droite). Elle permet d'obtenir une distribution beaucoup plus proche d'une loi normale, configuration idéale pour les critères de convergence des modèles prédictifs.
+
+### Corrélations Globales (fig-correlation)
+
+L'examen de la matrice de corrélation de Pearson révèle plusieurs relations statistiques fondamentales :
+
+- Performance quantitative vs Valeur : Les variables cumulées goals, assists, et surtout international_caps (sélections nationales) affichent une corrélation positive forte avec la valeur marchande. L'exposition internationale agit comme un multiplicateur de valeur économique.
+
+- Le facteur de l'Âge : La variable age présente une corrélation linéaire faible lorsqu'elle est prise globalement, ce qui suggère une relation non-linéaire (courbe en cloche ou parabolique). En effet, la valeur croît lors de la post-formation, stagne à la maturité (24-28 ans), puis décroît fortement à l'approche de la trentaine.
+
+- Biais mécanique : On note une corrélation presque parfaite entre market_value_in_eur et highest_market_value_in_eur, confirmant que le statut historique d'un joueur dicte durablement son plancher d'évaluation financière sur le marché.
+
 ---
 
 # Analyse Exploratoire des Données (EDA) {#sec-eda}
@@ -81,6 +98,24 @@ Dans cette section, nous analysons les relations statistiques fondamentales qui 
 
 ## Chapitre 4 : Travaux Pratiques d'Exploration (EDA)
 {{< include ../build/notebooks/04_eda.qmd >}}
+
+### Ingénierie de Variables (Feature Engineering)
+
+L’introduction de caractéristiques dérivées a pour but de fournir aux modèles de Machine Learning des relations mathématiques explicites que les algorithmes linéaires ou basés sur des arbres mettraient du temps à converger ou à capturer :
+
+- age_squared : La valeur marchande d’un footballeur suit une fonction concave par rapport au temps (croissance rapide, pic de maturité, déclin athlétique). Ajouter le terme quadratique de l'âge permet de linéariser cette composante parabolique pour les modèles régularisés.
+
+- value_drop_ratio : Mesure la perte relative de valeur par rapport au sommet de la carrière du joueur. Cet indicateur aide le modèle à segmenter les profils en phase d'ascension de ceux en perte de vitesse ou en fin de contrat.
+
+- Normalisation des événements (intl_efficiency, cards_per_90) : Transformer des compteurs bruts (nombre de cartons ou de buts) en ratios temporels ou par opportunité lisse le biais mécanique lié au temps de jeu cumulé des joueurs vétérans par rapport aux jeunes recrues.
+
+### Analyse des Tendances Majeures (Commentaire de la nouvelle figure) 
+
+L'analyse croisée de la courbe de valeur selon l'âge et le poste révèle des comportements sectoriels très marqués sur le marché des transferts :
+
+- Les Attaquants et Milieux offensifs atteignent leur pic de valorisation financière de manière précoce (généralement entre 23 et 26 ans), car le marché surévalue la vivacité physique et l'efficacité immédiate devant le but.
+
+- Les Défenseurs et les Gardiens de but affichent une courbe beaucoup plus stable et lissée. Leur pic de valeur survient plus tard (entre 27 et 30 ans), le marché récompensant l'expérience tactique, le placement et la régularité, des qualités qui se bonifient avec le temps. 
 
 ---
 
