@@ -1,8 +1,9 @@
 ---
 title: "🎓 Soutenance de Projet Data Science"
-subtitle: "Présentation des résultats - Sujet Libre"
-author: "Groupe d'étudiants [Insérer Noms]"
+subtitle: "Analyse Prédictive du Marché des Transferts Football"
+author: "Étudiant IPSSI"
 date: today
+lang: fr
 format:
   revealjs:
     theme: solarized
@@ -19,16 +20,18 @@ format:
 
 ### Objectifs d'Acquisition
 
-- *[À compléter par les étudiants]* : Décrivez vos sources brutes (fichiers locaux, APIs, web scraping).
+- **Source principale** : Base de données relationnelle Transfermarkt (via Kaggle).
+- **Volume** : Plus de 20 000 joueurs et des millions de lignes de statistiques de matchs (`appearances`).
+- **Outils** : Utilisation de `kagglehub` pour l'acquisition automatisée.
 
 ### Algorithmes de Nettoyage appliqués
 
-- Traitement des valeurs manquantes (imputation/interpolation).
-- Gestion des anomalies physiques (outliers).
-- Standardisation des dates et encodage.
+- **Agrégation temporelle** : Transformation des statistiques de match en ratios saisonniers par joueur.
+- **Imputation contextuelle** : Remplissage des valeurs manquantes (ex: `foot`) par le mode statistique selon le poste.
+- **Wrangling** : Jointure complexe entre les clubs, les joueurs et leurs performances réelles.
 
 > [!TIP]
-> Justifiez en quoi ces étapes garantissent la robustesse de vos modèles futurs.
+> Un nettoyage rigoureux a permis de passer d'une donnée brute éparse à un profil de performance "90 minutes" standardisé.
 
 ---
 
@@ -37,17 +40,17 @@ format:
 ## Exploration Visuelle & Insights Majeurs
 
 ### Statistiques Descriptives
-
-- Aperçu des indicateurs clés et structures.
+- Identification d'une forte asymétrie des prix (distribution de puissance).
+- Corrélation majeure entre l'expérience internationale et la valeur marchande.
 
 ### Feature Engineering
-
-- Extraction des variables cycliques et dérivées (ex: `hour`, `dayofweek`).
+- **Ratios d'efficacité** : `goals_per_90`, `assists_per_90`.
+- **Variables non-linéaires** : Création de `age_squared` pour capturer le pic de maturité athlétique.
+- **Statut International** : `intl_efficiency` (buts par sélection).
 
 ::: {.fragment}
 ### Insights Visuels clés
-
-- **Graphique interactif / statique** : Présentez ici le graphique le plus marquant (ex: corrélations ou tendances fortes).
+- **Top 10 des variables** : L'efficacité en équipe nationale domine les critères de prix, devant les statistiques en club.
 :::
 
 ---
@@ -58,14 +61,13 @@ format:
 
 ::: {.panel-tabset}
 ### Machine Learning Tabulaire
+- **Champion** : `XGBoost Regressor`.
+- **Pourquoi ?** : Capacité supérieure au `RandomForest` pour corriger les erreurs de prédiction de manière séquentielle (Gradient Boosting).
+- **Prétraitement** : Pipeline automatisé avec `StandardScaler` et `OneHotEncoder`.
 
-- Algorithme choisi : `RandomForestRegressor`, `XGBoost`, etc.
-- Justification du choix par rapport au problème métier.
-
-### Deep Learning (Vision / Signaux)
-
-- Réseau de neurones convolutif (**CNN**) sous **TensorFlow**.
-- Architecture des couches : *Conv2D*, *MaxPooling2D*, *Flatten*, *Dense*, *Dropout*.
+### Pivot Stratégique
+- **Note sur le CNN** : Initialement prévu, la brique Vision a été écartée pour concentrer l'effort sur la **profondeur analytique des données tabulaires**.
+- **Objectif** : Atteindre une robustesse industrielle sur l'interprétabilité des performances sportives plutôt que la simple classification d'images.
 :::
 
 ---
@@ -76,12 +78,12 @@ format:
 
 | Modèle | MAE | RMSE | $R^2$ (%) |
 | :--- | :---: | :---: | :---: |
-| Baseline (Ex: Naïve) | *[À compléter]* | *[À compléter]* | *[À compléter]* |
-| **Forêt Aléatoire (RF)** | **[À compléter]** | **[À compléter]** | **[À compléter]** |
-| **Réseau Convolutif (CNN)**| **[À compléter]** | **[À compléter]** | **[À compléter]** |
+| Baseline (Moyenne) | 2,04M € | 8,12M € | 0% |
+| Random Forest | 1,71M € | 6,87M € | 53.3% |
+| **XGBoost (Champion)** | **1,68M €** | **6,73M €** | **55.2%** |
 
 > [!IMPORTANT]
-> Expliquez votre protocole de validation (ex : split chronologique ou Cross-Validation) pour prévenir tout risque d'overfitting.
+> **Validation** : Split 80/20 avec transformation logarithmique de la cible ($log1p$) pour stabiliser la variance et minimiser l'impact des "Outliers" (Superstars).
 
 ---
 
@@ -90,9 +92,22 @@ format:
 ## Storytelling & Recommandations Stratégiques
 
 ### Recommandations Métier clés
-
-- *[À compléter]* : Traduisez vos métriques de performance en préconisations opérationnelles ou gains métier directs.
+- **Stratégie Moneyball** : Utilisation de l'*Indice d'Opportunité* pour détecter les joueurs dont les statistiques terrain dépassent leur prix de marché.
+- **Aide au Recrutement** : Ciblage prioritaire des joueurs à haute `intl_efficiency` encore sous-évalués par les algorithmes de marché classiques.
 
 ### Limites & Perspectives
+- **Biais** : Sous-estimation systématique des joueurs "Stars" (> 50M€) due à l'immatériel (marketing, hype).
+- **Futur** : Intégration de données de tracking GPS et de sentiment analysis sur les réseaux sociaux.
 
-- Biais des données, limites de l'architecture, et voies d'amélioration futures.
+---
+
+# 📈 Visualisation Interactive
+
+## Matrice de Décision
+
+Le graphique interactif (Plotly) généré permet de naviguer dans les anomalies du marché :
+
+- **Zone Rouge** : Joueurs sous-évalués (Pépites à acheter).
+- **Zone Bleue** : Joueurs surévalués (Risques financiers).
+
+*(Lien vers l'outil interactif disponible dans le rapport final)*
