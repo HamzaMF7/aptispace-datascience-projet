@@ -5,6 +5,7 @@ numpy>=1.24.0
 # Machine Learning & Deep Learning
 scikit-learn>=1.2.0
 tensorflow>=2.12.0
+xgboost>=2.0.0
 
 # Visualisation graphique
 matplotlib>=3.7.0
@@ -14,7 +15,9 @@ plotnine>=0.12.0
 # Kaggle & Datasets
 kagglehub>=0.3.0
 
+
 # Outils de développement
 ipykernel
 jupyter
 quarto
+
