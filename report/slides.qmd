@@ -110,4 +110,10 @@ Le graphique interactif (Plotly) généré permet de naviguer dans les anomalies
 - **Zone Rouge** : Joueurs sous-évalués (Pépites à acheter).
 - **Zone Bleue** : Joueurs surévalués (Risques financiers).
 
-*(Lien vers l'outil interactif disponible dans le rapport final)*
+```{=html}
+<iframe src="../report/figures/market_decision_interactive.html" 
+        width="100%" 
+        height="500px" 
+        frameborder="0"
+        allow="fullscreen">
+</iframe>

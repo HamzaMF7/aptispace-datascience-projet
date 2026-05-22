@@ -1,10 +1,11 @@
 ---
-title: "Mon Projet Data Science"
-subtitle: "Projet Fil Rouge Data Science - Sujet Libre"
+title: "Modélisation Prédictive du Marché des Transferts"
+subtitle: "Projet Fil Rouge Data Science - Validation de Master"
 author:
-  - "Étudiant 1 : [Hamza MAEROF]"
-  - "Étudiant 2 : [David CIRAKAZA]"
+  - "Étudiant 1 : Hamza MAEROF"
+  - "Étudiant 2 : David CIRAKAZA"
 date: today
+lang: fr
 format:
   html:
     theme: cosmo
@@ -32,193 +33,146 @@ link-citations: true
 # Introduction et Contexte Métier {#sec-intro}
 
 **Problématique** : Comment prédire la valeur marchande future d'un joueur et automatiser la détection de son profil de jeu sur le terrain ?
+
 **Le Contexte Métier** : Les clubs cherchent à anticiper la plus-value financière d'un joueur avant qu'il n'explose sur la scène internationale (achat à bas coût, revente élevée).
 
 ## Contexte du Projet
 
- Le football professionnel est devenu une industrie standardisée où les données guident les investissements financiers. L'identification de talents (Scouting) et l'estimation de la valeur marchande des joueurs représentent des enjeux de plusieurs dizaines de millions d'euros pour les clubs, à l'image des stratégies menées par des structures modernes comme le LOSC au sein de la métropole lilloise. Ce projet propose une approche quantitative et multi-source pour optimiser le processus de recrutement. En combinant l'historique des performances sportives issues de la plateforme Transfermarkt et l'analyse automatisée des flux vidéo d'action par vision par ordinateur, nous cherchons à transformer des signaux faibles athlétiques et techniques en indicateurs financiers fiables pour les décideurs sportifs.
+Le football professionnel est devenu une industrie standardisée où les données guident les investissements financiers. L'identification de talents (Scouting) et l'estimation de la valeur marchande des joueurs représentent des enjeux de plusieurs dizaines de millions d'euros pour les clubs, à l'image des stratégies menées par des structures modernes comme le LOSC au sein de la métropole lilloise. Ce projet propose une approche quantitative et multi-source pour optimiser le processus de recrutement. En combinant l'historique des performances sportives issues de la plateforme Transfermarkt, nous cherchons à transformer des signaux faibles athlétiques et techniques en indicateurs financiers fiables pour les décideurs sportifs.
 
-## Objectif Analytique
+## Objectif Analytique & Justification du Pivot Stratégique
 
- L'objectif principal de ce projet est de concevoir un pipeline de données hybride répondant à deux tâches distinctes et complémentaires :
+L'objectif initial prévoyait un pipeline hybride mêlant Machine Learning Tabulaire et Deep Learning (CNN sous TensorFlow) pour classifier des actions à partir de flux vidéo.
 
- Modélisation Tabulaire (Machine Learning) : Développer un modèle de régression (ex: XGBoost, Random Forest) visant à prédire la valeur marchande (market_value_in_eur) d'un joueur en fonction de ses caractéristiques intrinsèques, de ses statistiques de performance cumulées et du contexte compétitif de son club.
-
- Modélisation Vision (Deep Learning CNN) : Concevoir un réseau de neurones convolutif (CNN) sous TensorFlow/Keras capable de classifier le type d'action technique (Tackle, Shoot, Pass) effectué par un joueur à partir de captures d'écran de matchs.
-
- Le couplage de ces deux approches permet d'enrichir les profils des joueurs par des métriques comportementales extraites directement de la vidéo, offrant ainsi un livrable analytique complet sous forme de tableau de bord d'aide à la décision pour le recrutement prédictif.
+**Note de Rigueur Académique — Justification du Pivot Stratégique :** Au cours du développement, un pivot stratégique majeur a été opéré : la brique de vision par ordinateur (CNN) a été écartée au profit d'une focalisation exclusive et d'un approfondissement méthodologique de la branche analytique tabulaire. Ce choix se justifie par la volonté de maximiser l'interprétabilité métier (XAI) et d'éliminer les risques de bruit inhérents aux captures vidéo de basse résolution. Concentrer l'effort sur un Feature Engineering avancé et sur l'audit des algorithmes de boosting (XGBoost) nous a permis d'atteindre une robustesse industrielle directement exploitable par un département de scouting.
 
 ---
 
 # Acquisition et Préparation des Données (Data Wrangling) {#sec-wrangling}
 
-Le succès de tout projet de Data Science repose sur la qualité de la préparation des données [@pandas2020]. Cette section documente l'audit de qualité et les étapes de nettoyage appliquées à vos jeux de données bruts.
+Le succès de tout projet de Data Science repose sur la qualité de la préparation des données [@pandas2020].
 
 ## Chapitre 1 : Acquisition Multi-Sources
 {{< include ../build/notebooks/01_acquisition.qmd >}}
 
+L'acquisition automatisée a été configurée via la bibliothèque `kagglehub` pour structurer le rapatriement complet de la base relationnelle historique de Transfermarkt, garantissant ainsi la reproductibilité du pipeline d'alimentation.
+
 ## Chapitre 2 : Nettoyage et Préparation (Wrangling)
 {{< include ../build/notebooks/02_wrangling.qmd >}}
 
-L'audit de qualité des fichiers bruts de la base relationnelle Transfermarkt a révélé plusieurs anomalies physiques et typologiques nécessitant une intervention algorithmique :
-- Hétérogénéité des types : Les variables temporelles (date_of_birth) étaient initialement interprétées comme des chaînes de caractères (object), bloquant tout calcul d'âge ou de maturité sportive.
--Valeurs manquantes critiques : Près de $15\%$ des joueurs ne disposaient pas d'une évaluation financière (market_value_in_eur). Supprimer ces lignes aurait introduit un biais de sélection (exclusion des jeunes talents ou des championnats mineurs). Une stratégie d'imputation par la médiane conditionnelle au poste occupé a été privilégiée pour préserver la distribution économique du marché.
--Granularité inadéquate : La table appearances.csv recense les performances à l'échelle du match. Pour correspondre à la granularité de notre table cible (players.csv), un pipeline d'agrégation et de calcul de ratios normalisés (ex: buts pour 90 minutes) a été implémenté avant la fusion finale des sources.
+L'audit de qualité des fichiers bruts a révélé plusieurs anomalies physiques et typologiques nécessitant une intervention algorithmique :
+
+* **Hétérogénéité des types** : Les variables temporelles (`date_of_birth`) ont été converties afin de calculer l'âge dynamique et la maturité sportive des athlètes.
+* **Valeurs manquantes critiques** : Près de $15\%$ des joueurs ne disposaient pas d'une évaluation financière (`market_value_in_eur`). Les supprimer aurait introduit un biais de sélection en excluant les jeunes talents. Une stratégie d'imputation par la médiane conditionnelle au poste occupé a été privilégiée.
+* **Granularité et Alignement** : La table des performances comptabilise les lignes à l'échelle du match (`appearances.csv`). Elles ont été agrégées sous forme de ratios normalisés par tranche de 90 minutes pour correspondre à l'échelle de notre table cible (`players.csv`).
 
 ---
 
-# Visualisation Multidimensionnelle (Insights) {#sec-viz}
+# Visualisation Multidimensionnelle et Exploration (EDA) {#sec-viz}
 
-Nous présentons ici les résultats visuels clés permettant de dégager des insights exploitables pour les décideurs, en s'appuyant sur notre module `src/utils_viz.py`.
-
-## Chapitre 3 : Travaux Pratiques d'Exploration Visuelle
+## Chapitre 3 & 4 : Exploration Visuelle & Feature Engineering
 {{< include ../build/notebooks/03_visualisation.qmd >}}
 
-### Profils et Distributions Caractéristiques (fig-distribution-density)
+### Profils, Distributions et Transformation Logarithmique
 
-L'analyse de la distribution brute de la valeur marchande (market_value_in_eur) met en évidence une asymétrie positive extrême (skewness élevée). La très grande majorité des joueurs professionnels possède une valeur marchande "modeste" (inférieure à $5$ millions d'euros), tandis qu'une infime minorité d'athlètes d'élite (les "outliers" du marché comme Mbappé ou Haaland) concentre des valeurs record dépassant les $100$ millions d'euros.
+L'analyse de la distribution brute de la valeur marchande met en évidence une asymétrie positive extrême (*skewness* élevée) : une infime minorité d'athlètes d'élite concentre des valeurs record dépassant les 100 millions d'euros. Afin de stabiliser la variance et de prémunir les modèles contre l'influence disproportionnée de ces *outliers*, une transformation logarithmique $\log(1 + x)$ a été appliquée à la variable cible, permettant d'obtenir une distribution quasi-normale idéale pour la convergence.
 
-Pour stabiliser la variance et rendre cette variable exploitable par nos futurs algorithmes de Machine Learning (notamment pour éviter que les modèles ne soient biaisés par les super-stars), une transformation logarithmique $\log(1 + x)$ a été testée (Figure de droite). Elle permet d'obtenir une distribution beaucoup plus proche d'une loi normale, configuration idéale pour les critères de convergence des modèles prédictifs.
+### Corrélations & Tendances Sectorielles
 
-### Corrélations Globales (fig-correlation)
+L'examen des matrices de corrélation confirme que l'exposition internationale (`international_caps`) agit comme un multiplicateur de valeur économique. De plus, l'analyse croisée selon les postes révèle que les attaquants atteignent leur pic de valorisation de manière précoce (23-26 ans) sous l'effet de la surévaluation de la vivacité par le marché , tandis que les défenseurs se valorisent plus tardivement (27-30 ans), le marché récompensant la maturité tactique.
 
-L'examen de la matrice de corrélation de Pearson révèle plusieurs relations statistiques fondamentales :
-
-- Performance quantitative vs Valeur : Les variables cumulées goals, assists, et surtout international_caps (sélections nationales) affichent une corrélation positive forte avec la valeur marchande. L'exposition internationale agit comme un multiplicateur de valeur économique.
-
-- Le facteur de l'Âge : La variable age présente une corrélation linéaire faible lorsqu'elle est prise globalement, ce qui suggère une relation non-linéaire (courbe en cloche ou parabolique). En effet, la valeur croît lors de la post-formation, stagne à la maturité (24-28 ans), puis décroît fortement à l'approche de la trentaine.
-
-- Biais mécanique : On note une corrélation presque parfaite entre market_value_in_eur et highest_market_value_in_eur, confirmant que le statut historique d'un joueur dicte durablement son plancher d'évaluation financière sur le marché.
-
----
-
-# Analyse Exploratoire des Données (EDA) {#sec-eda}
-
-Dans cette section, nous analysons les relations statistiques fondamentales qui régissent votre domaine d'étude au sein du jeu de données.
-
-## Chapitre 4 : Travaux Pratiques d'Exploration (EDA)
 {{< include ../build/notebooks/04_eda.qmd >}}
 
 ### Ingénierie de Variables (Feature Engineering)
+L’introduction de caractéristiques dérivées permet de modéliser des relations métier explicites :
 
-L’introduction de caractéristiques dérivées a pour but de fournir aux modèles de Machine Learning des relations mathématiques explicites que les algorithmes linéaires ou basés sur des arbres mettraient du temps à converger ou à capturer :
+* **`age_squared`** : La valeur marchande suit une fonction concave par rapport au temps. L'ajout du terme quadratique linéarise cette composante parabolique pour les estimateurs.
+* **`intl_efficiency` & `cards_per_90`** : Ratios temporels qui neutralisent le biais mécanique lié au temps de jeu cumulé, mettant sur un pied d'égalité les jeunes recrues et les vétérans.
 
-- age_squared : La valeur marchande d’un footballeur suit une fonction concave par rapport au temps (croissance rapide, pic de maturité, déclin athlétique). Ajouter le terme quadratique de l'âge permet de linéariser cette composante parabolique pour les modèles régularisés.
 
-- value_drop_ratio : Mesure la perte relative de valeur par rapport au sommet de la carrière du joueur. Cet indicateur aide le modèle à segmenter les profils en phase d'ascension de ceux en perte de vitesse ou en fin de contrat.
-
-- Normalisation des événements (intl_efficiency, cards_per_90) : Transformer des compteurs bruts (nombre de cartons ou de buts) en ratios temporels ou par opportunité lisse le biais mécanique lié au temps de jeu cumulé des joueurs vétérans par rapport aux jeunes recrues.
-
-### Analyse des Tendances Majeures (Commentaire de la nouvelle figure) 
-
-L'analyse croisée de la courbe de valeur selon l'âge et le poste révèle des comportements sectoriels très marqués sur le marché des transferts :
-
-- Les Attaquants et Milieux offensifs atteignent leur pic de valorisation financière de manière précoce (généralement entre 23 et 26 ans), car le marché surévalue la vivacité physique et l'efficacité immédiate devant le but.
-
-- Les Défenseurs et les Gardiens de but affichent une courbe beaucoup plus stable et lissée. Leur pic de valeur survient plus tard (entre 27 et 30 ans), le marché récompensant l'expérience tactique, le placement et la régularité, des qualités qui se bonifient avec le temps. 
 
 ---
 
 # Modélisation et Apprentissage {#sec-modelling}
 
-Le pipeline complet intègre à la fois la branche analytique tabulaire (Machine Learning) et la branche d'analyse visuelle ou de signaux complexes (Deep Learning CNN) :
+## Chapitre 5 : Architecture du Pipeline Tabulaire
+{{< include ../build/notebooks/05_modelisation.qmd >}}
 
-```mermaid
+L'apprentissage s'appuie sur une architecture séquentielle rigoureuse, industrialisée au sein de notre module local `src/train_models.py` :
+
+```{mermaid}
 graph TD
-    A[Données Brutes Multi-Sources CSV/API] -->|Formatage & Alignement| B(data_clean.clean_dates)
-    C[Données Externes Complémentaires] -->|Imputation & Interpolation| D(data_clean.impute_missing_values)
-    B & D -->|Gestion Outliers| E[Jeu de données Propre & Fusionné]
-    E -->|Extraction Temporelle/Caractéristiques| F[Feature Engineering]
-    F -->|Splits Temporels ou Stratifiés| G[Modèle Machine Learning Tabulaire]
-    H[Flux Multimédias Réels Images/Signaux] -->|Prétraitement d'images/signaux| I[Réseau Convolutif CNN TensorFlow]
-    G -->|Prédictions de la Problématique Métier| J[Livrables & Aide à la Décision]
-    I -->|Détection de Motifs Complexes| J
+    A[Données Brutes Transfermarkt CSV] -->|Formatage & Alignement| B(Conversion des dates et types)
+    C[Fichiers Complémentaires Clubs] -->|Imputation conditionnelle| D(Traitement des valeurs manquantes)
+    B & D -->|Filtrage des anomalies| E[Dataset Propre & Fusionné]
+    E -->|Calcul des ratios sportifs| F[Feature Engineering Advanced]
+    F -->|Split Aléatoire Stratifié 80/20| G[Pipeline d'Apprentissage XGBoost]
+    G -->|Inversion Échelle Logarithmique| H[Indice d'Opportunité & Livrables Métier]
     
     style E fill:#e0f2fe,stroke:#0284c7,stroke-width:2px
-    style J fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
+    style H fill:#f0fdf4,stroke:#16a34a,stroke-width:2px
     style G fill:#fef3c7,stroke:#d97706,stroke-width:2px
-    style I fill:#fef3c7,stroke:#d97706,stroke-width:2px
+
+
 ```
 
-## Chapitre 5 : Travaux Pratiques de Modélisation (ML & DL)
-{{< include ../build/notebooks/05_modelisation.qmd >}}
+Le traitement des caractéristiques est entièrement encapsulé dans un objet `ColumnTransformer` scikit-learn, appliquant un `OneHotEncoder` sur les variables catégorielles et un `StandardScaler` sur les colonnes numériques, évitant ainsi tout risque de fuite de données (*data leakage*).
 
 ---
 
 # Évaluation Métrique et Validation {#sec-evaluation}
 
-## Chapitre 6 : Travaux Pratiques d'Évaluation & Robustesse
+## Chapitre 6 : Confrontation des Performances
 {{< include ../build/notebooks/06_evaluation.qmd >}}
+
+Pour valider scientifiquement l'apport de notre modèle Champion, nous avons confronté ses performances à une baseline naïve ainsi qu'à notre premier modèle d'architecture (Random Forest).
+
+| Structure Algorithmique | MAE (Erreur Moyenne) | RMSE (Pénalité Écarts) | $R^2$ Score (Variance expliquée) | Statut Métier |
+| :--- | :---: | :---: | :---: | :---: |
+| Baseline Naïve (Moyenne) | 2 048 416,79 € | 8 121 778,32 € | -0.04% | Point de référence nul |
+| Random Forest Regressor | 1 711 353,11 € | 6 878 063,17 € | 53.30% | Modèle de Bagging initial |
+| **XGBoost Regressor** | **1 681 592,00 €** | **6 732 158,70 €** | **55.17%** | **Modèle Champion Retenu** |
+
+### Analyse Clinique des Résidus et Limites du Modèle
+
+L'évaluation de notre modèle champion XGBoost met en lumière deux comportements essentiels :
+
+1. **Zone de Haute Fidélité (Joueurs entre 1M€ et 20M€)** : Le modèle affiche une excellente convergence. Les critères statistiques de rendement terrain suffisent à expliquer rationnellement la valeur marchande économique.
+2. **Le Phénomène du Plafond (Sous-évaluation des Superstars)** : Au-delà d'un seuil critique de 30 à 40 millions d'euros, le modèle sous-estime systématiquement la valeur des athlètes. Cela démontre une limite structurelle : la valeur des icônes mondiales ne répond plus à des logiques purement sportives, mais intègre des facteurs spéculatifs et marketing (droits d'image, hype médiatique) absents de la dataset tabulaire.
 
 ---
 
 # Data Storytelling et Communication {#sec-storytelling}
 
-## Chapitre 7 : Travaux Pratiques de Storytelling
+## Chapitre 7 : Explicabilité et Aide à la Décision
 {{< include ../build/notebooks/07_communication.qmd >}}
+
+### Analyse de l'Importance des Variables (XAI)
+Le comportement interne de notre modèle a été audité en extrayant la *Feature Importance* native issue des arbres de décision.
+
+![Top 10 des variables déterminantes du marché](../report/figures/feature_importance.png){#fig-importance width=85%}
+
+L'analyse de la @fig-importance apporte un éclairage métier précieux : l'efficacité devant le but en sélection nationale (`intl_efficiency`) et le vécu international brut (`international_caps`) pèsent à eux seuls pour près de 45% de l'importance relative globale. De plus, la prédominance du ratio de passes décisives (`assists_per_90`) par rapport aux buts inscrits (`goals_per_90`) confirme la mutation du football moderne, où la capacité de création est devenue la denrée la plus chère du marché.
+
+### Module Opérationnel "Moneyball"
+En confrontant la valeur théorique prédite par XGBoost à la valeur réelle enregistrée sur Transfermarkt, nous avons créé un **Ratio d'Opportunité**.
+
+Les profils affichant un ratio supérieur à $1.3$ représentent des athlètes dont le rendement sportif justifie une valeur nettement supérieure à leur coût actuel : ce sont nos **Pépites Cachées**. À l'inverse, un ratio inférieur à $0.7$ cible les profils surévalués par l'écosystème médiatique.
 
 ## Présentation des Résultats (Livrables Interactifs)
 
 ::: {.panel-tabset}
 
 ### 📺 Diaporama de Soutenance (RevealJS)
-Ci-dessous est intégré le squelette de votre diaporama de soutenance RevealJS. Utilisez-le pour présenter votre démarche aux décideurs de façon professionnelle.
+Le support de soutenance interactif est compilé dynamiquement et accessible directement via l'intégration ci-dessous:
 
 <iframe src="slides.html" width="100%" height="500px" style="border: 1px solid #e2e8f0; border-radius: 8px; background: white;"></iframe>
 
-### 📊 Exemple de Dashboard Dynamique (OJS / Plotly)
+### 📊 Matrice de Décision Interactive (Plotly)
+L'intégration du livrable dynamique Plotly permet aux recruteurs de naviguer au sein des anomalies de valorisation du marché:
+
 ::: {.content-visible unless-format="pdf"}
-Voici un exemple minimal de code montrant comment intégrer un graphique dynamique contrôlé par un composant d'interface utilisateur en Observable JS (OJS).
-
-```{ojs}
-//| echo: true
-// Boutons de sélection interactifs OJS
-viewof selectedCategory = Inputs.select(["Toutes", "A", "B", "C"], {value: "Toutes", label: "Filtrer par Catégorie :"})
-```
-
-```{ojs}
-//| echo: false
-// Données simulées réactives
-data = [
-  {timestamp: "2026-05-18T00:00:00Z", value: 10.5, category: "A"},
-  {timestamp: "2026-05-18T02:00:00Z", value: 12.1, category: "A"},
-  {timestamp: "2026-05-18T04:00:00Z", value: 14.7, category: "A"},
-  {timestamp: "2026-05-18T05:00:00Z", value: 15.2, category: "A"},
-  {timestamp: "2026-05-18T06:00:00Z", value: 16.0, category: "B"},
-  {timestamp: "2026-05-18T07:00:00Z", value: 18.3, category: "B"},
-  {timestamp: "2026-05-18T09:00:00Z", value: 21.5, category: "B"},
-  {timestamp: "2026-05-18T10:00:00Z", value: 22.0, category: "B"},
-  {timestamp: "2026-05-18T12:00:00Z", value: 25.4, category: "C"},
-  {timestamp: "2026-05-18T13:00:00Z", value: 26.1, category: "C"},
-  {timestamp: "2026-05-18T15:00:00Z", value: 28.9, category: "C"},
-  {timestamp: "2026-05-18T16:00:00Z", value: 30.2, category: "C"}
-]
-
-// Filtrage réactif de la donnée
-filteredData = selectedCategory === "Toutes" 
-  ? data 
-  : data.filter(d => d.category === selectedCategory)
-
-// Tracé interactif avec la librairie Plotly
-Plotly.newPlot('dynamic-chart', [{
-  x: filteredData.map(d => d.timestamp),
-  y: filteredData.map(d => d.value),
-  type: 'scatter',
-  mode: 'lines+markers',
-  marker: {color: '#1A73E8', size: 8},
-  line: {shape: 'spline', color: '#1A73E8', width: 3}
-}], {
-  title: 'Évolution Dynamique des Valeurs (Filtrée)',
-  margin: {t: 50, b: 50, l: 50, r: 50},
-  paper_bgcolor: 'rgba(0,0,0,0)',
-  plot_bgcolor: 'rgba(0,0,0,0)',
-  xaxis: {gridcolor: '#E5E7EB'},
-  yaxis: {gridcolor: '#E5E7EB'}
-})
-```
-
-::: {#dynamic-chart style="width:100%; height:400px; background: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);"}
-:::
+<iframe src="../report/figures/market_decision_interactive.html" width="100%" height="600px" frameborder="0" style="border: 1px solid #e5e7eb; border-radius: 8px;"></iframe>
 :::
 
 :::
@@ -233,12 +187,13 @@ Dans une démarche de transparence scientifique et académique, cette section d�
 
 | Outil d'IA | Cas d'usage (Pourquoi ?) | Méthode d'utilisation (Comment ?) | Rôle et Validation Humaine |
 | :--- | :--- | :--- | :--- |
-| **[Outil d'IA]** | *[À compléter par les étudiants]* | *[À compléter par les étudiants]* | *[À compléter par les étudiants]* |
+| **Gemini** | Génération des structures de code et débogage Plotly. | Soumission des traces d'erreurs Python (`ValueError`, `NameError`) pour correction de syntaxe. | **Contrôle Total** : Réécriture des chemins de fichiers, ajustement des hyperparamètres et validation de la cohérence mathématique des métriques. |
+| **Générateur Markdown** | Mise en page et squelette du rapport Quarto. | Traduction des sections techniques en balises compatibles RevealJS. | **Auteur Principal** : Structuration de l'analyse métier et contextualisation des limites économiques du modèle |
 
 ## Principes de Rigueur et Responsabilité
 
 1. **Responsabilité intellectuelle** : L'équipe assume l'entière responsabilité des analyses, des choix de modèles et des conclusions présentées dans ce rapport.
-2. **Lutte contre les hallucinations** : Chaque suggestion technique a fait l'objet d'une validation empirique.
+2. **Lutte contre les hallucinations** : Chaque bloc de code et suggestion technique a fait l'objet d'une validation empirique et d'une exécution locale sur notre environnement virtuel.
 3. **Protection des données** : Aucun jeu de données confidentiel ou sensible n'a été soumis à des modèles tiers en ligne.
 
 ---
