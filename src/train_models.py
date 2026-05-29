@@ -9,20 +9,32 @@ from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 def prepare_data(df, target_col='market_value_in_eur'):
     """
-    Sépare les features de la cible et applique un découpage Train/Test.
+    Sépare les données en ensembles d'entraînement/test (valeurs connues) et de scouting (valeurs manquantes).
+    Conserve les DataFrames de métadonnées pour le storytelling opérationnel (noms de joueurs, clubs).
     """
     # Sélection des features pertinentes pour le modèle
     features_numeric = ['age', 'age_squared', 'height_in_cm', 'goals_per_90', 
                         'assists_per_90', 'cards_per_90', 'international_caps', 'intl_efficiency']
     features_categorical = ['position', 'foot']
     
-    X = df[features_numeric + features_categorical]
-    # Transformation logarithmique de la cible pour stabiliser la variance (comme vu à l'EDA)
-    y = np.log1p(df[target_col]) 
+    # 1. Séparation des joueurs labélisés (valeur connue) et scouting (NaN)
+    df_labeled = df[df[target_col].notna()].copy()
+    df_scouting = df[df[target_col].isna()].copy()
     
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # 2. Découpage Train/Test sur les données labélisées
+    df_train, df_test = train_test_split(df_labeled, test_size=0.2, random_state=42)
     
-    return X_train, X_test, y_train, y_test, features_numeric, features_categorical
+    # 3. Extraction des matrices explicatives (X) et cibles (y, log-transform)
+    X_train = df_train[features_numeric + features_categorical]
+    y_train = np.log1p(df_train[target_col])
+    
+    X_test = df_test[features_numeric + features_categorical]
+    y_test = np.log1p(df_test[target_col])
+    
+    # Pour le scouting, on prépare uniquement la matrice explicative X
+    X_scouting = df_scouting[features_numeric + features_categorical]
+    
+    return df_train, df_test, df_scouting, X_train, X_test, X_scouting, y_train, y_test, features_numeric, features_categorical
 
 def build_preprocessing_pipeline(numeric_cols, categorical_cols):
     """

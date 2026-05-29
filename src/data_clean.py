@@ -18,11 +18,8 @@ def impute_missing_data(df_players):
     """
     df = df_players.copy()
     
-    # Imputation de la variable cible (Évite de supprimer des lignes)
-    if 'market_value_in_eur' in df.columns and 'position' in df.columns:
-        df['market_value_in_eur'] = df.groupby('position')['market_value_in_eur'].transform(
-            lambda x: x.fillna(x.median())
-        )
+    # NOTE : La variable cible 'market_value_in_eur' n'est plus imputée ici pour éviter de biaiser l'entraînement.
+    # Les valeurs manquantes (NaN) seront séparées dans le jeu de scouting lors de la préparation des données.
         
     # Imputation du pied fort
     if 'foot' in df.columns:
