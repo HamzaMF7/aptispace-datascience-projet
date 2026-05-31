@@ -77,9 +77,18 @@ L'audit de qualité des fichiers bruts a révélé plusieurs anomalies physiques
 
 L'analyse de la distribution brute de la valeur marchande met en évidence une asymétrie positive extrême (*skewness* élevée) : une infime minorité d'athlètes d'élite concentre des valeurs record dépassant les 100 millions d'euros. Afin de stabiliser la variance et de prémunir les modèles contre l'influence disproportionnée de ces *outliers*, une transformation logarithmique $\log(1 + x)$ a été appliquée à la variable cible, permettant d'obtenir une distribution quasi-normale idéale pour la convergence.
 
-### Corrélations & Tendances Sectorielles
+### Analyse des Corrélations (Matrice de Corrélation)
 
-L'examen des matrices de corrélation confirme que l'exposition internationale (`international_caps`) agit comme un multiplicateur de valeur économique. De plus, l'analyse croisée selon les postes révèle que les attaquants atteignent leur pic de valorisation de manière précoce (23-26 ans) sous l'effet de la surévaluation de la vivacité par le marché , tandis que les défenseurs se valorisent plus tardivement (27-30 ans), le marché récompensant la maturité tactique.
+Afin de comprendre les relations linéaires entre nos différentes caractéristiques numériques et la valeur marchande, nous avons généré une matrice de corrélation de Pearson.
+
+![Matrice de corrélation des variables clés](../report/figures/correlation_matrix.png){#fig-correlation width=85%}
+
+**Analyse technique et métier de la @fig-correlation :**
+
+1. **Le rôle moteur de l'exposition internationale** : La variable `international_caps` (nombre de sélections en équipe nationale) présente la corrélation positive la plus forte avec notre variable cible $\log(\text{market\_value\_in\_eur})$. Cela démontre empiriquement que le statut international agit comme un puissant accélérateur de valeur marchande, fonctionnant comme un label de qualité sur le marché des transferts.
+2. **L'importance de la création de jeu** : Le ratio de passes décisives (`assists_per_90`) affiche une corrélation légèrement supérieure à celle des buts marqués (`goals_per_90`). Cela valide une tendance forte du football moderne : les profils capables de créer des décalages et de distribuer le jeu sont hautement valorisés, parfois plus que les purs finisseurs.
+3. **La colinéarité maîtrisée de l'âge** : Comme attendu, l'âge brut présente une corrélation linéaire modérée. C’est précisément ce qui a justifié l'introduction de notre variable quadratique `age_squared` : la relation entre l'âge et la valeur n'étant pas linéaire mais parabolique (courbe en cloche), la matrice de Pearson seule sous-estime l'impact réel de l'âge, d'où l'importance des arbres de décision de XGBoost pour capter ces non-linéarités.
+
 
 {{< include ../build/notebooks/04_eda.qmd >}}
 
